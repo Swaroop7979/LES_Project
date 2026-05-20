@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LES · Theory Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root {
+      --bg:        #faf5ff;
+      --surface:   rgba(255, 255, 255, 0.85);
+      --surface2:  rgba(255, 255, 255, 0.95);
+      --border:    rgba(0, 0, 0, 0.08);
+      --border2:   rgba(0, 0, 0, 0.15);
+      --fg:        #2e1065;
+      --muted:     #7c3aed;
+      --violet:    #8b5cf6;
+      --violet-d:  rgba(139,92,246,0.12);
+      --pink:      #ec4899;
+      --pink-d:    rgba(236,72,153,0.1);
+      --cyan:      #0ea5e9;
+      --cyan-d:    rgba(14,165,233,0.1);
+      --green:     #10b981;
+      --green-d:   rgba(16,185,129,0.1);
+      --amber:     #f59e0b;
+      --amber-d:   rgba(245,158,11,0.1);
+      --red:       #ef4444;
+      --red-d:     rgba(239,68,68,0.1);
+      --mono:      'DM Mono', monospace;
+      --sans:      'Inter', sans-serif;
+      --display:   'Outfit', sans-serif;
+      --radius:    14px;
+    }
+    html{font-size:16px;}
+    body{
+      background:var(--bg);color:var(--fg);font-family:var(--sans);
+      min-height:100vh;display:flex;flex-direction:column;
+    }
+    body::before{
+      content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+      background:
+        radial-gradient(ellipse 55% 45% at 8% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 40% at 90% 75%, rgba(236, 72, 153, 0.06) 0%, transparent 65%);
+    }
+
+    /* NAV */
+    nav{
+      position:sticky;top:0;z-index:100;
+      background:var(--surface);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;height:52px;
+    }
+    .nav-logo{font-family:var(--display);font-weight:800;font-size:1rem;}
+    .nav-logo span{color:var(--violet);}
+    .nav-links{display:flex;gap:8px;align-items:center;}
+    .nav-link{font-size:.78rem;color:var(--muted);text-decoration:none;padding:5px 11px;border:1px solid var(--border);border-radius:7px;transition:color .13s,border-color .13s;background:none;cursor:pointer;font-family:var(--sans);}
+    .nav-link:hover{color:var(--fg);border-color:var(--border2);}
+
+    /* WRAP */
+    .wrap{max-width:680px;margin:0 auto;padding:36px 20px 64px;position:relative;z-index:1;}
+
+    /* HEADER */
+    .page-title{font-family:var(--display);font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin-bottom:6px;}
+    .page-sub{font-size:.85rem;color:var(--muted);margin-bottom:28px;font-family:var(--mono);}
+
+    /* PROGRESS BAR */
+    .qprog{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+    .qprog-track{flex:1;height:4px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+    .qprog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--pink));transition:width .4s ease;}
+    .qprog-label{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap;}
+
+    /* QUESTION CARD */
+    .qcard{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:24px 26px;margin-bottom:16px;animation:fadeIn .25s ease;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .q-topic{font-family:var(--mono);font-size:.65rem;color:var(--violet);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+    .q-text{font-size:1rem;font-weight:600;color:var(--fg);line-height:1.55;margin-bottom:20px;font-family:var(--display);}
+
+    /* OPTIONS */
+    .options{display:flex;flex-direction:column;gap:8px;}
+    .opt{
+      display:flex;align-items:flex-start;gap:12px;
+      padding:12px 14px;border-radius:9px;cursor:pointer;
+      border:1px solid var(--border);background:var(--surface2);
+      transition:border-color .15s,background .15s;
+      font-size:.88rem;color:var(--fg);line-height:1.45;
+      text-align:left;width:100%;font-family:var(--sans);
+    }
+    .opt:hover:not(:disabled){border-color:var(--border2);background:rgba(0,0,0,.04);}
+    .opt.selected{border-color:var(--violet);background:var(--violet-d);}
+    .opt.correct {border-color:var(--green); background:rgba(52,211,153,.1); color:var(--green);}
+    .opt.wrong   {border-color:var(--red);   background:rgba(248,113,113,.1);color:var(--red);}
+    .opt.reveal  {border-color:var(--green); background:rgba(52,211,153,.07);color:var(--green);}
+    .opt-letter{
+      width:22px;height:22px;border-radius:6px;flex-shrink:0;
+      background:var(--surface);border:1px solid var(--border2);
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--muted);
+      margin-top:1px;
+    }
+    .opt.selected .opt-letter{background:var(--violet-d);color:var(--violet);border-color:rgba(139,92,246,.4);}
+    .opt.correct  .opt-letter,.opt.reveal .opt-letter{background:rgba(52,211,153,.15);color:var(--green);border-color:rgba(52,211,153,.3);}
+    .opt.wrong    .opt-letter{background:rgba(248,113,113,.15);color:var(--red);border-color:rgba(248,113,113,.3);}
+
+    /* NAV BUTTONS */
+    .qnav{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+    .btn-next{
+      background:linear-gradient(135deg,var(--violet),var(--pink));
+      color:#fff;border:none;border-radius:8px;padding:10px 22px;
+      font-family:var(--display);font-weight:700;font-size:.85rem;
+      cursor:pointer;transition:opacity .15s,transform .15s;
+    }
+    .btn-next:hover{opacity:.88;transform:translateY(-1px);}
+    .btn-next:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+    /* RESULTS */
+    .results-header{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:28px;text-align:center;margin-bottom:20px;
+    }
+    .score-big{font-family:var(--display);font-size:4rem;font-weight:800;line-height:1;}
+    .score-label{font-family:var(--mono);font-size:.78rem;color:var(--muted);margin-top:8px;}
+    .score-msg{font-size:.95rem;color:var(--fg);margin-top:12px;line-height:1.5;}
+    .score-msg strong{color:var(--violet);}
+
+    .res-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:18px 20px;margin-bottom:10px;
+    }
+    .res-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+    .res-icon{font-size:1.1rem;margin-top:1px;flex-shrink:0;}
+    .res-q{font-size:.88rem;font-weight:600;color:var(--fg);line-height:1.45;font-family:var(--display);}
+    .res-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+    .res-opt{font-size:.82rem;padding:8px 12px;border-radius:7px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+    .res-opt.correct{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08);color:var(--green);}
+    .res-opt.wrong  {border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.08);color:var(--red);}
+    .res-explain{font-size:.8rem;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;line-height:1.5;}
+    .res-explain strong{color:var(--fg);}
+
+    .results-footer{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+    .btn-retry{background:var(--violet-d);border:1px solid rgba(167,139,250,.25);color:var(--violet);border-radius:8px;padding:10px 20px;font-family:var(--display);font-weight:700;font-size:.85rem;cursor:pointer;transition:background .15s;}
+    .btn-retry:hover{background:rgba(139,92,246,.2);}
+    .btn-dash{background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:var(--display);font-weight:700;font-size:.85rem;cursor:pointer;transition:opacity .15s;}
+    .btn-dash:hover{opacity:.88;}
+
+    /* LOADING */
+    .loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--mono);font-size:.85rem;}
+
+    @media(max-width:500px){.qcard{padding:18px 16px;}.score-big{font-size:3rem;}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">[<span>LES</span>]</div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link">← Dashboard</a>
+    <button class="nav-link" onclick="doLogout()">⎋ Logout</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div id="mcq-root">
+    <div class="loading">Loading questions…</div>
+  </div>
+</div>
+
+<script>
+const LETTERS = ['A','B','C','D'];
+let questions = [];
+let current   = 0;
+let selected  = {};  // {qid: chosen_index}
+
+async function doLogout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/';}
+
+// ── Boot ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/api/mcq/questions');
+    const data = await res.json();
+    questions = data.questions;
+    renderQuestion();
+  } catch(e) {
+    document.getElementById('mcq-root').innerHTML = '<div class="loading" style="color:var(--red)">⚠ Failed to load questions. Please refresh.</div>';
+  }
+});
+
+// ── Render question ───────────────────────────────────────────
+function renderQuestion() {
+  if (!questions.length) return;
+  const q   = questions[current];
+  const pct = ((current) / questions.length) * 100;
+  const chose = selected[q.id] ?? null;
+
+  document.getElementById('mcq-root').innerHTML = `
+    <div class="page-title">🧠 Theory Test</div>
+    <div class="page-sub">Linear Equation Systems · 5 Questions · Results at End</div>
+
+    <div class="qprog">
+      <div class="qprog-track"><div class="qprog-fill" style="width:${pct}%"></div></div>
+      <div class="qprog-label">${current+1} / ${questions.length}</div>
+    </div>
+
+    <div class="qcard">
+      <div class="q-topic">${q.topic}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options" id="opts">
+        ${q.options.map((opt,i)=>`
+          <button class="opt${chose===i?' selected':''}" onclick="choose(${q.id},${i})" id="opt-${i}">
+            <span class="opt-letter">${LETTERS[i]}</span>
+            ${opt}
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <div class="qnav">
+      ${current > 0 ? `<button class="btn-next" style="background:var(--surface2);color:var(--fg);border:1px solid var(--border)" onclick="goBack()">← Back</button>` : ''}
+      <button class="btn-next" id="btn-next" onclick="goNext()" ${chose===null?'disabled':''}>
+        ${current === questions.length-1 ? 'Submit Test →' : 'Next →'}
+      </button>
+    </div>
+  `;
+}
+
+function choose(qid, idx) {
+  selected[qid] = idx;
+  renderQuestion();
+}
+
+function goNext() {
+  if (current < questions.length-1) {
+    current++;
+    renderQuestion();
+  } else {
+    submitTest();
+  }
+}
+
+function goBack() {
+  if (current > 0) { current--; renderQuestion(); }
+}
+
+// ── Submit ────────────────────────────────────────────────────
+async function submitTest() {
+  document.getElementById('mcq-root').innerHTML = '<div class="loading">Checking answers…</div>';
+  try {
+    const res  = await fetch('/api/mcq/submit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ answers: selected })
+    });
+    const data = await res.json();
+    if (data.ok) renderResults(data);
+    else document.getElementById('mcq-root').innerHTML = `<div class="loading" style="color:var(--red)">⚠ ${data.error}</div>`;
+  } catch(e) {
+    document.getElementById('mcq-root').innerHTML = '<div class="loading" style="color:var(--red)">⚠ Submission failed. Please refresh.</div>';
+  }
+}
+
+// ── Results ───────────────────────────────────────────────────
+function renderResults(data) {
+  const { score, total, results } = data;
+  const pct = Math.round((score/total)*100);
+  const col  = pct>=80?'var(--green)':pct>=60?'var(--amber)':'var(--red)';
+  const msgs = {
+    100: 'Perfect score! You have an excellent grasp of the theory. 🎉',
+    80:  'Great work! A solid understanding of linear equation systems. 💪',
+    60:  'Good effort — revisit the topics you missed to strengthen your foundation.',
+    0:   'Keep studying the theory — understanding the concepts will improve your quiz scores too.',
+  };
+  const msgKey = pct>=100?100:pct>=80?80:pct>=60?60:0;
+
+  const cards = results.map(r => {
+    const optRows = r.options.map((opt,i)=>{
+      let cls='';
+      if (i===r.correct) cls='correct';
+      else if (i===r.chosen && !r.is_correct) cls='wrong';
+      return `<div class="res-opt ${cls}">${LETTERS[i]}. ${opt}</div>`;
+    }).join('');
+    return `
+      <div class="res-card">
+        <div class="res-top">
+          <div class="res-icon">${r.is_correct?'✅':'❌'}</div>
+          <div class="res-q">${r.q}</div>
+        </div>
+        <div class="res-opts">${optRows}</div>
+        <div class="res-explain"><strong>Explanation:</strong> ${r.explain}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('mcq-root').innerHTML = `
+    <div class="results-header">
+      <div class="score-big" style="color:${col}">${score}<span style="font-size:2rem;color:var(--muted)">/${total}</span></div>
+      <div class="score-label">THEORY TEST SCORE</div>
+      <div class="score-msg"><strong>${pct}%</strong> — ${msgs[msgKey]}</div>
+    </div>
+
+    ${cards}
+
+    <div class="results-footer">
+      <button class="btn-retry" onclick="retryTest()">↺ Try Again</button>
+      <button class="btn-dash"  onclick="window.location.href='/dashboard'">← Dashboard</button>
+    </div>
+  `;
+}
+
+function retryTest() {
+  selected = {};
+  current  = 0;
+  document.getElementById('mcq-root').innerHTML = '<div class="loading">Loading new questions…</div>';
+  fetch('/api/mcq/questions').then(r=>r.json()).then(d=>{
+    questions = d.questions;
+    renderQuestion();
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LES · My Progress</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Progress page layout ── */
+    .prog-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+    .prog-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .prog-title { font-size: 1.45rem; font-weight: 700; color: var(--fg); }
+    .prog-sub   { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+    .prog-nav-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .prog-nav-btns a {
+      font-size: .8rem;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: color .15s, border-color .15s;
+    }
+    .prog-nav-btns a:hover { color: var(--fg); border-color: var(--fg); }
+
+    /* ── Section titles ── */
+    .prog-section { margin-bottom: 36px; }
+    .prog-section-title {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Stat chips ── */
+    .prog-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .prog-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .prog-chip-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+    .prog-chip-val   { font-size: 1.55rem; font-weight: 700; color: var(--fg); margin-top: 4px; }
+    .prog-chip-val.green { color: var(--green); }
+    .prog-chip-val.amber { color: var(--amber); }
+    .prog-chip-val.red   { color: var(--red);   }
+    .prog-chip-val.blue  { color: var(--blue);  }
+
+    /* ── Callout card ── */
+    .prog-callout {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: .88rem;
+      color: var(--fg);
+      margin-bottom: 14px;
+      line-height: 1.55;
+    }
+    .prog-callout strong { color: var(--blue); }
+    .prog-callout.warn   { border-left: 3px solid var(--amber); }
+    .prog-callout.good   { border-left: 3px solid var(--green); }
+    .prog-callout.bad    { border-left: 3px solid var(--red);   }
+
+    /* ── Chart panels ── */
+    .prog-chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 580px) { .prog-chart-row { grid-template-columns: 1fr; } }
+    .prog-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .prog-panel-title {
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 12px;
+    }
+
+    /* ── Card bar breakdown ── */
+    .card-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: .83rem;
+    }
+    .card-bar-label { width: 90px; color: var(--muted); flex-shrink: 0; }
+    .card-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .card-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .5s ease;
+    }
+    .card-bar-score { width: 38px; text-align: right; color: var(--fg); font-weight: 600; }
+
+    /* ── Sol type table ── */
+    .sol-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .sol-table th { color: var(--muted); text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .sol-table td { padding: 8px; border-bottom: 1px solid var(--border); color: var(--fg); }
+    .sol-table tr:last-child td { border-bottom: none; }
+
+    /* ── Session cards ── */
+    .session-cards { display: flex; flex-direction: column; gap: 12px; }
+    .session-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .session-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .session-card-meta { font-size: .78rem; color: var(--muted); }
+    .session-card-total { font-size: 1.25rem; font-weight: 700; }
+    .session-card-delta { font-size: .78rem; font-weight: 600; margin-left: 8px; }
+    .session-card-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .session-pill {
+      font-size: .74rem;
+      padding: 3px 9px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+    .session-pill.green { border-color: var(--green); color: var(--green); background: rgba(var(--green-rgb,.3,1,.45),.08); }
+    .session-pill.amber { border-color: var(--amber); color: var(--amber); }
+    .session-pill.red   { border-color: var(--red);   color: var(--red);   }
+    .session-pill.hint  { border-color: var(--muted); color: var(--muted); }
+    .session-pill.time  { border-color: var(--blue);  color: var(--blue);  }
+    .hint-badge {
+      display: inline-block;
+      font-size: .7rem;
+      background: rgba(255,200,50,.12);
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      border-radius: 99px;
+      padding: 2px 8px;
+      margin-left: 6px;
+    }
+
+    /* ── Empty state ── */
+    .prog-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .prog-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .prog-empty-msg  { font-size: .95rem; }
+
+    /* ── Loading ── */
+    .prog-loading { text-align: center; padding: 60px; color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <!-- top nav bar -->
+  <header class="dash-topbar" style="position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div style="font-weight:700;font-size:.95rem;letter-spacing:.04em">[<span style="color:var(--muted)">LES</span>]</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a href="/quiz"      style="font-size:.8rem;color:var(--muted);text-decoration:none;padding:5px 12px;border:1px solid var(--border);border-radius:6px">+ New Quiz</a>
+      <a href="/dashboard" style="font-size:.8rem;color:var(--muted);text-decoration:none;padding:5px 12px;border:1px solid var(--border);border-radius:6px">Dashboard</a>
+      <button onclick="doLogout()" style="font-size:.8rem;background:none;border:none;color:var(--muted);cursor:pointer;padding:5px">⎋ Logout</button>
+    </div>
+  </header>
+
+  <main class="prog-wrap">
+    <div class="prog-topbar">
+      <div>
+        <div class="prog-title">📊 My Progress</div>
+        <div class="prog-sub">Your full learning history &amp; analysis</div>
+      </div>
+      <div class="prog-nav-btns">
+        <a href="#aggregate">Profile</a>
+        <a href="#trend">Trend</a>
+        <a href="#weakspots">Weak Spots</a>
+        <a href="#sessions">Sessions</a>
+      </div>
+    </div>
+
+    <div id="prog-content">
+      <div class="prog-loading">Loading your progress…</div>
+    </div>
+  </main>
+
+  <script>
+  const CARD_LABELS = {
+    aug_matrix:   'Aug. Matrix',
+    rank:         'Rank',
+    sol_type:     'Sol. Type',
+    final_answer: 'Final Ans.'
+  };
+  const CARD_COLORS = {
+    aug_matrix:   '#4f8ef7',
+    rank:         '#a78bfa',
+    sol_type:     '#34d399',
+    final_answer: '#fb923c',
+  };
+  const SOL_LABELS = { unique: 'Unique', infinite: 'Infinite', none: 'No Solution' };
+
+  let progData = null;
+  const chartInst = {};
+
+  // ── Boot ──────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res  = await fetch('/api/progress/data');
+      progData   = await res.json();
+      renderAll(progData);
+    } catch(e) {
+      document.getElementById('prog-content').innerHTML =
+        '<div class="prog-empty"><div class="prog-empty-icon">⚠️</div><div class="prog-empty-msg">Could not load progress data.</div></div>';
+    }
+  });
+
+  async function doLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/';
+  }
+
+  // ── Render everything ─────────────────────────────────────────
+  function renderAll({ attempts, aggregate: agg }) {
+    Object.values(chartInst).forEach(c => c?.destroy());
+
+    if (!attempts || attempts.length === 0) {
+      document.getElementById('prog-content').innerHTML = `
+        <div class="prog-empty">
+          <div class="prog-empty-icon">📭</div>
+          <div class="prog-empty-msg">No quiz attempts yet.<br/>Complete a quiz to see your progress here.</div>
+          <br/><a href="/quiz" class="btn-quiz-link" style="font-size:.85rem;color:var(--blue)">Start a Quiz →</a>
+        </div>`;
+      return;
+    }
+
+    const html = `
+      <div id="aggregate" class="prog-section">${renderAggregate(agg)}</div>
+      <div id="trend"     class="prog-section">${renderTrend()}</div>
+      <div id="weakspots" class="prog-section">${renderWeakSpots(agg)}</div>
+      <div id="sessions"  class="prog-section">${renderSessions(attempts)}</div>
+    `;
+    document.getElementById('prog-content').innerHTML = html;
+
+    // Draw charts after DOM is ready
+    requestAnimationFrame(() => {
+      drawTrendChart(attempts);
+      drawRadarChart(agg.card_stats);
+    });
+  }
+
+  // ── Section: Aggregate Profile ────────────────────────────────
+  function renderAggregate(agg) {
+    const imp = agg.improvement;
+    const impCol = imp > 0 ? 'green' : imp < 0 ? 'red' : '';
+    const impSign = imp >= 0 ? '+' : '';
+
+    return `
+      <div class="prog-section-title">📋 Your Profile</div>
+      <div class="prog-chips">
+        <div class="prog-chip">
+          <div class="prog-chip-label">Total Quizzes</div>
+          <div class="prog-chip-val blue">${agg.total_attempts}</div>
+        </div>
+        <div class="prog-chip">
+          <div class="prog-chip-label">Best Score</div>
+          <div class="prog-chip-val green">${agg.best_score ?? '—'}<span style="font-size:.75rem;color:var(--muted)">/20</span></div>
+        </div>
+        <div class="prog-chip">
+          <div class="prog-chip-label">Avg Score</div>
+          <div class="prog-chip-val">${agg.avg_score ?? '—'}<span style="font-size:.75rem;color:var(--muted)">/20</span></div>
+        </div>
+        <div class="prog-chip">
+          <div class="prog-chip-label">Overall Change</div>
+          <div class="prog-chip-val ${impCol}">${impSign}${imp.toFixed(1)}</div>
+        </div>
+        <div class="prog-chip">
+          <div class="prog-chip-label">Hint-free Streak</div>
+          <div class="prog-chip-val ${agg.hint_free_streak > 0 ? 'green' : ''}">${agg.hint_free_streak} 🔥</div>
+        </div>
+      </div>
+
+      <div class="prog-chart-row">
+        <div class="prog-panel">
+          <div class="prog-panel-title">Average Score per Card</div>
+          ${renderCardBars(agg.card_stats)}
+        </div>
+        <div class="prog-panel">
+          <div class="prog-panel-title">Skill Radar</div>
+          <canvas id="chart-radar" height="180"></canvas>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCardBars(cardStats) {
+    return Object.entries(CARD_LABELS).map(([k, label]) => {
+      const s   = cardStats[k];
+      const avg = s?.avg ?? 0;
+      const pct = (avg / 5) * 100;
+      const col = avg >= 4 ? '#34d399' : avg >= 2.5 ? '#fbbf24' : '#f87171';
+      const t   = s?.avg_time_secs != null ? `${s.avg_time_secs}s` : '—';
+      return `
+        <div class="card-bar-row">
+          <div class="card-bar-label">${label}</div>
+          <div class="card-bar-track">
+            <div class="card-bar-fill" style="width:${pct}%;background:${col}"></div>
+          </div>
+          <div class="card-bar-score">${avg.toFixed(1)}/5</div>
+          <div class="card-bar-time">⏱ ${t}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Section: Trend ────────────────────────────────────────────
+  function renderTrend() {
+    return `
+      <div class="prog-section-title">📈 Score Trend</div>
+      <div class="prog-panel">
+        <div class="prog-panel-title">Total Score Over Time (out of 20)</div>
+        <canvas id="chart-trend" height="130"></canvas>
+      </div>
+      
+    `;
+  }
+
+  // ── Section: Session Cards ────────────────────────────────────
+  function renderSessions(attempts) {
+    // newest first
+    const sorted = [...attempts].reverse();
+    const cards = sorted.map((a, idx) => {
+      const prev = sorted[idx + 1];
+      const delta = prev && a.total != null && prev.total != null ? a.total - prev.total : null;
+      const deltaHtml = delta != null
+        ? `<span class="session-card-delta" style="color:${delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--red)' : 'var(--muted)'}">${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</span>`
+        : '';
+
+      const totalCol = (a.total ?? 0) >= 15 ? 'green' : (a.total ?? 0) >= 10 ? 'amber' : 'red';
+      const hintsUsed = Object.values(a.hint_counts || {}).reduce((s, v) => s + v, 0);
+
+      // Per-card pills
+      const pills = Object.entries(CARD_LABELS).map(([k, label]) => {
+        const s = a.scores?.[k] ?? null;
+        if (s == null) return '';
+        const cls = s >= 4 ? 'green' : s >= 2.5 ? 'amber' : 'red';
+        return `<span class="session-pill ${cls}">${label}: ${s}/5</span>`;
+      }).join('');
+
+      const hintBadge = hintsUsed > 0 ? `<span class="hint-badge">💡 ${hintsUsed} hint${hintsUsed > 1 ? 's' : ''}</span>` : '';
+
+      const solBadge  = a.sol_type ? `<span class="session-pill">${SOL_LABELS[a.sol_type] ?? a.sol_type}</span>` : '';
+      const dimBadge  = a.n_eq && a.n_var ? `<span class="session-pill">${a.n_eq}×${a.n_var}</span>` : '';
+
+      return `
+        <div class="session-card">
+          <div class="session-card-header">
+            <div>
+              <div class="session-card-meta">${a.timestamp} ${hintBadge}</div>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-top:4px">
+                <div class="session-card-total" style="color:var(--${totalCol})">${a.total?.toFixed(1) ?? '—'}<span style="font-size:.8rem;color:var(--muted)">/20</span></div>
+                ${deltaHtml}
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              ${dimBadge}${solBadge}
+            </div>
+          </div>
+          <div class="session-card-pills">${pills}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="prog-section-title">🗂 All Sessions (${attempts.length})</div>
+      <div class="session-cards">${cards}</div>
+    `;
+  }
+
+  // ── Charts ────────────────────────────────────────────────────
+  function chartDefaults() {
+    return {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        y: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } }
+      }
+    };
+  }
+
+  function drawTrendChart(attempts) {
+    const ctx = document.getElementById('chart-trend');
+    if (!ctx) return;
+    const labels = attempts.map(a => a.timestamp.split(' ')[0]);
+    const data   = attempts.map(a => a.total ?? 0);
+    chartInst['trend'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          borderColor: '#4f8ef7',
+          backgroundColor: 'rgba(79,142,247,.1)',
+          pointBackgroundColor: '#4f8ef7',
+          fill: true,
+          tension: .35,
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        ...chartDefaults(),
+        scales: {
+          ...chartDefaults().scales,
+          y: { ...chartDefaults().scales.y, min: 0, max: 20 }
+        }
+      }
+    });
+  }
+
+  function drawRadarChart(cardStats) {
+    const ctx = document.getElementById('chart-radar');
+    if (!ctx) return;
+    const keys   = Object.keys(CARD_LABELS);
+    const labels = keys.map(k => CARD_LABELS[k]);
+    const data   = keys.map(k => cardStats[k]?.avg ?? 0);
+    chartInst['radar'] = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: 'rgba(79,142,247,.15)',
+          borderColor: '#4f8ef7',
+          pointBackgroundColor: '#4f8ef7',
+          pointRadius: 3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            min: 0, max: 5,
+            ticks: { color: '#6b7280', stepSize: 1, font: { size: 10 }, backdropColor: 'transparent' },
+            grid:  { color: 'rgba(0,0,0,0.06)' },
+            angleLines: { color: 'rgba(0,0,0,0.06)' },
+            pointLabels: { color: '#9ca3af', font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+
+  // Issue #1 fix: renderWeakSpots was undefined — causing page crash
+  function renderWeakSpots(agg) {
+    const cardKeys = Object.keys(CARD_LABELS);
+    const weak     = cardKeys.filter(k => (agg.card_stats[k]?.avg ?? 0) < 2.5);
+    const strong   = cardKeys.filter(k => (agg.card_stats[k]?.avg ?? 0) >= 4.0);
+
+    let html = '<div class="prog-section-title">🎯 Weak Spots & Strengths</div>';
+
+    if (!weak.length) {
+      html += '<div class="prog-callout good">✅ No significant weaknesses detected — keep it up!</div>';
+    } else {
+      weak.forEach(k => {
+        const avg = agg.card_stats[k]?.avg ?? 0;
+        html += `<div class="prog-callout bad">⚠️ <strong>${CARD_LABELS[k]}</strong> — avg ${avg.toFixed(1)}/5. Needs more practice.</div>`;
+      });
+    }
+
+    if (strong.length) {
+      strong.forEach(k => {
+        const avg = agg.card_stats[k]?.avg ?? 0;
+        html += `<div class="prog-callout good">⭐ <strong>${CARD_LABELS[k]}</strong> — avg ${avg.toFixed(1)}/5. Strong area!</div>`;
+      });
+    }
+
+    if (agg.weakest_card) {
+      html += `<div class="prog-callout warn" style="margin-top:10px">📌 Focus area: <strong>${CARD_LABELS[agg.weakest_card]}</strong></div>`;
+    }
+    return html;
+  }
+
+  </script>
+</body>
+</html>

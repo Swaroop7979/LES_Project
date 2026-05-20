@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LES — Linear Equation System Solver</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- Floating math symbols -->
+<div class="math-bg" aria-hidden="true">
+  <span style="top:8%;  left:6%;  font-size:7rem;">∑</span>
+  <span style="top:20%; right:8%; font-size:5rem;">∫</span>
+  <span style="top:55%; left:3%; font-size:6rem;">∇</span>
+  <span style="top:70%; right:5%; font-size:8rem;">λ</span>
+  <span style="top:40%; left:50%;font-size:4rem;">∞</span>
+  <span style="top:85%; left:25%;font-size:5rem;">∂</span>
+  <span style="top:15%; left:40%;font-size:3.5rem;">π</span>
+  <span style="top:60%; right:20%;font-size:6rem;">Σ</span>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <!-- Auth button LEFT of logo -->
+    <div class="header-auth" id="header-auth">
+      <!-- filled by JS -->
+    </div>
+    <div class="logo"><span class="logo-bracket">[</span>LES<span class="logo-bracket">]</span></div>
+    <div class="header-title">Linear Equation System Solver</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" style="width:0%"></div>
+  </div>
+</header>
+
+<!-- HERO -->
+<main class="home-main">
+  <div class="hero">
+    <h1 class="hero-heading">LINEAR EQUATION<br>SYSTEM</h1>
+    <div class="hero-underline"></div>
+    <p class="hero-sub">Solve. Learn. Master linear algebra step by step.</p>
+    <button class="btn btn-cta" id="cta-btn" onclick="handleCTA()">Solve Problem →</button>
+  </div>
+</main>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" style="display:none">
+  <div class="hint-overlay" id="auth-overlay" onclick="handleOverlayClick(event)">
+    <div class="hint-box auth-box">
+      <div class="hint-box-header">
+        <span class="logo" style="font-size:0.95rem"><span class="logo-bracket">[</span>LES<span class="logo-bracket">]</span></span>
+        <span style="margin-left:10px">Student Access</span>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Login</button>
+        <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <div class="hint-box-body" style="padding-top:0">
+
+        <!-- LOGIN FORM -->
+        <div id="login-form">
+          <div class="auth-field">
+            <label class="auth-label">Username</label>
+            <input class="num-input auth-input" type="text" id="login-username"
+                   placeholder="your username" autocomplete="username" />
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Password</label>
+            <div class="pw-wrap">
+              <input class="num-input auth-input" type="password" id="login-password"
+                     placeholder="••••••••" autocomplete="current-password" />
+              <button class="pw-eye" type="button" onclick="togglePw('login-password',this)" tabindex="-1">👁</button>
+            </div>
+          </div>
+          <div id="login-error" class="auth-error" style="display:none"></div>
+          <button class="btn btn-primary auth-submit" onclick="doLogin()">Login →</button>
+        </div>
+
+        <!-- SIGNUP FORM -->
+        <div id="signup-form" style="display:none">
+          <div class="auth-field">
+            <label class="auth-label">Username</label>
+            <input class="num-input auth-input" type="text" id="signup-username"
+                   placeholder="choose a username" autocomplete="username" />
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Password</label>
+            <div class="pw-wrap">
+              <input class="num-input auth-input" type="password" id="signup-password"
+                     placeholder="••••••••" autocomplete="new-password" />
+              <button class="pw-eye" type="button" onclick="togglePw('signup-password',this)" tabindex="-1">👁</button>
+            </div>
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">Confirm Password</label>
+            <div class="pw-wrap">
+              <input class="num-input auth-input" type="password" id="signup-confirm"
+                     placeholder="••••••••" autocomplete="new-password" />
+              <button class="pw-eye" type="button" onclick="togglePw('signup-confirm',this)" tabindex="-1">👁</button>
+            </div>
+          </div>
+          <div id="signup-error" class="auth-error" style="display:none"></div>
+          <button class="btn btn-primary auth-submit" onclick="doSignup()">Create Account →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Auth state ────────────────────────────────────────────────
+let currentUser = null;
+
+async function checkAuthStatus() {
+  const res  = await fetch('/api/auth/status');
+  const data = await res.json();
+  if (data.logged_in) {
+    currentUser = data.username;
+    renderLoggedIn(data.username);
+  } else {
+    renderLoggedOut();
+  }
+}
+
+function renderLoggedIn(username) {
+  const initials = username.slice(0,2).toUpperCase();
+  document.getElementById('header-auth').innerHTML = `
+    <div class="user-pill">
+      <span class="user-avatar">${initials}</span>
+      <span class="user-name">${username}</span>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>`;
+}
+
+function renderLoggedOut() {
+  document.getElementById('header-auth').innerHTML =
+    `<button class="btn-auth-header" onclick="openModal()">[ Login / Sign up ]</button>`;
+}
+
+// ── CTA ───────────────────────────────────────────────────────
+function handleCTA() {
+  if (currentUser) { window.location.href = '/dashboard'; }
+  else { openModal(); }
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('auth-modal').style.display = 'block';
+  document.getElementById('login-username').focus();
+}
+function closeModal() {
+  document.getElementById('auth-modal').style.display = 'none';
+  clearErrors();
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('auth-overlay')) closeModal();
+}
+
+// ── Tab ───────────────────────────────────────────────────────
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('login-form').style.display  = isLogin ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('tab-login').classList.toggle('active',  isLogin);
+  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+  clearErrors();
+  setTimeout(() => {
+    document.getElementById(isLogin ? 'login-username' : 'signup-username').focus();
+  }, 50);
+}
+
+// ── Login ─────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) { showError('login-error', 'Please fill in all fields.'); return; }
+
+  const res  = await fetch('/api/auth/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username, password})
+  });
+  const data = await res.json();
+  if (data.ok) {
+    currentUser = data.username;
+    renderLoggedIn(data.username);
+    closeModal();
+    window.location.href = '/dashboard';
+  } else {
+    showError('login-error', data.error);
+  }
+}
+
+// ── Signup ────────────────────────────────────────────────────
+async function doSignup() {
+  const username = document.getElementById('signup-username').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm  = document.getElementById('signup-confirm').value;
+  if (!username || !password || !confirm) { showError('signup-error', 'Please fill in all fields.'); return; }
+
+  const res  = await fetch('/api/auth/signup', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username, password, confirm})
+  });
+  const data = await res.json();
+  if (data.ok) {
+    currentUser = data.username;
+    renderLoggedIn(data.username);
+    closeModal();
+    window.location.href = '/dashboard';
+  } else {
+    showError('signup-error', data.error);
+  }
+}
+
+// ── Logout ────────────────────────────────────────────────────
+async function doLogout() {
+  await fetch('/api/auth/logout');
+  currentUser = null;
+  renderLoggedOut();
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function clearErrors() {
+  ['login-error','signup-error'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent=''; el.style.display='none'; }
+  });
+}
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type='text';     btn.textContent='🙈'; }
+  else                          { inp.type='password'; btn.textContent='👁'; }
+}
+
+// Enter key support
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthStatus();
+  ['login-username','login-password'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+  ['signup-username','signup-password','signup-confirm'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSignup();
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LES — Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <button class="back-btn" onclick="confirmDashboard()">← Dashboard</button>
+    <div class="logo"><span class="logo-bracket">[</span>LES<span class="logo-bracket">]</span></div>
+    <div class="header-title">Linear Equation System Solver</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="score-badge" id="score-badge" style="visibility:hidden">
+        Score: <span id="live-score">0</span> / 20
+      </div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+</header>
+
+<main>
+  <div id="card-container">
+
+    <!-- CARD 1: Configuration -->
+    <div class="card active" id="card-1">
+      <div class="card-header">
+        <span class="card-num">01</span>
+        <h2>Matrix Configuration</h2>
+        <p class="card-sub">Set the dimensions of your linear system.</p>
+      </div>
+      <div class="card-body">
+        <div class="config-grid">
+          <label>
+            <span>Equations (rows)</span>
+            <input type="number" id="n-eq" min="2" max="5" value="2" class="num-input" placeholder="e.g. 2" />
+          </label>
+          <div class="config-x">×</div>
+          <label>
+            <span>Variables (columns)</span>
+            <input type="number" id="n-var" min="2" max="5" value="2" class="num-input" placeholder="e.g. 2" />
+          </label>
+        </div>
+        <p class="hint-text">Maximum size: 5 × 5 &nbsp;|&nbsp; Whole numbers only</p>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="configureMatrix()">Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2: Enter Equations -->
+    <div class="card" id="card-2">
+      <div class="card-header">
+        <span class="card-num">02</span>
+        <h2>Enter Equations</h2>
+        <p class="card-sub">Fill in the coefficients and constants for each equation.</p>
+      </div>
+      <div class="card-body">
+        <div id="eq-table-wrap"></div>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="submitEquations()">Solve →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3: Augmented Matrix Quiz -->
+    <div class="card" id="card-3">
+      <div class="card-header">
+        <span class="card-num">03</span>
+        <h2>Augmented Matrix Quiz</h2>
+        <p class="card-sub">Form the augmented matrix [A | b] from your system.</p>
+        <div class="quiz-meta">
+          <span class="quiz-marks">5 marks</span>
+          <span id="q3-retries" class="quiz-retries">1 retry available</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="aug-matrix-wrap"></div>
+        <div class="feedback-box" id="q3-feedback" style="display:none"></div>
+        <div class="card-actions" id="q3-actions">
+          <button class="btn btn-hint" id="q3-hint-btn" onclick="showHint('augmented_matrix','q3')">💡 Hint (0 marks)</button>
+          <button class="btn btn-primary" id="q3-submit-btn" onclick="submitAugMatrix()">Check →</button>
+          <button class="btn btn-primary" id="q3-next-btn" style="display:none" onclick="goCard(4)">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: Rank Quiz -->
+    <div class="card" id="card-4">
+      <div class="card-header">
+        <span class="card-num">04</span>
+        <h2>Rank Quiz</h2>
+        <p class="card-sub">Determine the ranks of both matrices.</p>
+        <div class="quiz-meta">
+          <span class="quiz-marks">5 marks</span>
+          <span id="q4-retries" class="quiz-retries">1 retry available</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="rank-inputs">
+          <label>
+            <span>Rank of Coefficient Matrix A</span>
+            <input type="number" id="rank-coeff" min="0" class="num-input" placeholder="e.g. 2" />
+          </label>
+          <label>
+            <span>Rank of Augmented Matrix [A|b]</span>
+            <input type="number" id="rank-aug" min="0" class="num-input" placeholder="e.g. 2" />
+          </label>
+        </div>
+        <div class="feedback-box" id="q4-feedback" style="display:none"></div>
+        <div class="card-actions" id="q4-actions">
+          <button class="btn btn-hint" id="q4-hint-btn" onclick="showHint('rank','q4')">💡 Hint (0 marks)</button>
+          <button class="btn btn-primary" id="q4-submit-btn" onclick="submitRank()">Check →</button>
+          <button class="btn btn-primary" id="q4-next-btn" style="display:none" onclick="goCard(5)">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 5: Solution Type Quiz -->
+    <div class="card" id="card-5">
+      <div class="card-header">
+        <span class="card-num">05</span>
+        <h2>Type of Solution</h2>
+        <p class="card-sub">Based on the ranks, what type of solution does this system have?</p>
+        <div class="quiz-meta">
+          <span class="quiz-marks">5 marks</span>
+          <span id="q5-retries" class="quiz-retries">1 retry available</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="radio-group" id="sol-type-group">
+          <label class="radio-card">
+            <input type="radio" name="sol_type" value="unique" />
+            <div class="radio-inner"><span class="radio-icon">①</span><span>Unique Solution</span></div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="sol_type" value="infinite" />
+            <div class="radio-inner"><span class="radio-icon">∞</span><span>Infinite Solutions</span></div>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="sol_type" value="none" />
+            <div class="radio-inner"><span class="radio-icon">∅</span><span>No Solution</span></div>
+          </label>
+        </div>
+        <div class="feedback-box" id="q5-feedback" style="display:none"></div>
+        <div class="card-actions" id="q5-actions">
+          <button class="btn btn-hint" id="q5-hint-btn" onclick="showHint('solution_type','q5')">💡 Hint (0 marks)</button>
+          <button class="btn btn-primary" id="q5-submit-btn" onclick="submitSolType()">Check →</button>
+          <button class="btn btn-primary" id="q5-next-btn" style="display:none" onclick="goToCard6()">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 6: Final Answer -->
+    <div class="card" id="card-6">
+      <div class="card-header">
+        <span class="card-num">06</span>
+        <h2>Final Answer</h2>
+        <p class="card-sub" id="q6-sub">Enter the solution values.</p>
+        <div class="quiz-meta">
+          <span class="quiz-marks">5 marks</span>
+          <span id="q6-retries" class="quiz-retries">1 retry available</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="final-answer-wrap"></div>
+        <div class="feedback-box" id="q6-feedback" style="display:none"></div>
+        <div class="card-actions" id="q6-actions">
+          <button class="btn btn-hint" id="q6-hint-btn" onclick="showHint('final_answer','q6')">💡 Hint (0 marks)</button>
+          <button class="btn btn-primary" id="q6-submit-btn" onclick="submitFinalAnswer()">Check →</button>
+          <button class="btn btn-primary" id="q6-next-btn" style="display:none" onclick="loadResults()">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 7: Results -->
+    <div class="card" id="card-7">
+      <div class="card-header">
+        <span class="card-num">07</span>
+        <h2>Results</h2>
+        <p class="card-sub">Here's how you did!</p>
+      </div>
+      <div class="card-body" id="results-body"></div>
+    </div>
+
+  </div><!-- end #card-container -->
+
+
+</main>
+
+<script src="/static/js/app.js"></script>
+<script>
+  function confirmDashboard() {
+    showConfirmModal(
+      '← Leave Quiz',
+      '<p class="hint-explain">Your current quiz progress will be lost. Go to Dashboard anyway?</p>',
+      () => { window.location.href = '/dashboard'; }
+    );
+  }
+  function goToCard6() {
+    buildFinalAnswerCard();
+    goCard(6);
+  }
+</script>
+</body>
+</html>
