@@ -69,7 +69,7 @@ les_new/
 
 ```bash
 # Clone the repo
-git clone <your-repo-url>
+git clone https://github.com/Swaroop7979/LES_Project.git
 cd les_new
 
 # Install dependencies
@@ -128,8 +128,4 @@ The app will be available at `http://localhost:5000`. The database tables are cr
 
 Built by Swaroop Maluskar , Dhiren Kolaskar , Sharval Pardeshi and Ram Khabale as first-year project at PCCOE.
 
----
 
-## 📄 License
-
-This project was built for academic purposes. Feel free to fork and adapt.
